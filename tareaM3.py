@@ -15,7 +15,9 @@ def agent_portrayal(agent):
         #Caso en el que sea semáforo
         if isinstance(agent,entornoAgent):
             portrayal["Color"] = "black"
-        if isinstance(agent,SemaforoAgent):
+        if isinstance(agent,SemaforoAgent1):
+            portrayal["Color"] = "yellow"
+        if isinstance(agent,SemaforoAgent2):
             portrayal["Color"] = "yellow"
         return portrayal
 
@@ -46,11 +48,48 @@ class CarAgent2(mesa.Agent):
     def step(self):
         self.move()
 
-class SemaforoAgent(mesa.Agent):
+class SemaforoAgent1(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
-        self.myTuple = []
+        self.izquierda = []
+        self.derecha = []
+        #self.value = self.model.grid.is_cell_empty([3,5])
+    def move(self):
+        x,y = self.pos
+        new_position = x,y
+        self.model.grid.move_agent(self,new_position)
+
+    def verificaIzquierda(self):
+        if self.model.grid.is_cell_empty(self.izquierda):
+            print("Vacio")
+        else:
+            print("Contenido a la izquierda")
+    def compara(self):
+        possible_steps = self.model.grid.get_neighborhood(
+            self.pos,
+            moore=False,
+            include_center=False)
+        self.izquierda = possible_steps[0]
+       # self.derecha = possible_steps[3]
+    def step(self):
+        self.compara()
+        self.move() 
+        self.verificaIzquierda()
+
+class SemaforoAgent2(mesa.Agent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+        self.nombre = unique_id
+        self.arriba = []
+        self.abajo = []
+        
+        #self.value = self.model.grid.is_cell_empty([3,5])
+    def verificaArriba(self):
+        if self.model.grid.is_cell_empty(self.arriba):
+            print("Vacio")
+        else:
+            print("Contenido arriba")
     def move(self):
         x,y = self.pos
         new_position = x,y
@@ -61,11 +100,14 @@ class SemaforoAgent(mesa.Agent):
             self.pos,
             moore=False,
             include_center=False)
-        self.myTuple = possible_steps
+        #self.abajo = possible_steps[1]
+        self.arriba = possible_steps[2]
     def step(self):
         self.compara()
-        self.move() 
-        print(self.myTuple)
+        self.move()
+       # self.verificaArriba()
+        
+    
 
 class entornoAgent(mesa.Agent):
     def __init__(self, unique_id, model):
@@ -92,16 +134,7 @@ class CarModel(mesa.Model):
         
         classes = [CarAgent1,CarAgent2]
 
-        s1 = SemaforoAgent("S" + str(1),self)
-        self.schedule.add(s1)
-        x1 = 4
-        y1 = 5 
-        self.grid.place_agent(s1,(4,5))
-        s2 = SemaforoAgent("S" + str(2),self)
-        self.schedule.add(s2)
-        x2 = 4
-        y2 = 5 
-        self.grid.place_agent(s2,(5,6))
+      
 
         for i in range (5):
             for j in range(5):
@@ -153,8 +186,17 @@ class CarModel(mesa.Model):
                 x = 5
                 y = 10
                 self.grid.place_agent(a,(x,y))
-        
 
+        s1 = SemaforoAgent1("S" + str(1),self)
+        self.schedule.add(s1)
+        x1 = 4
+        y1 = 5 
+        self.grid.place_agent(s1,(4,5))
+        s2 = SemaforoAgent2("S" + str(2),self)
+        self.schedule.add(s2)
+        x2 = 4
+        y2 = 5 
+        self.grid.place_agent(s2,(5,6))
 
 
         
