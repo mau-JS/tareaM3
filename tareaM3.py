@@ -28,9 +28,6 @@ class CarAgent1(mesa.Agent):
         super().__init__(unique_id, model)
         self.nombre = unique_id
     def move(self):
-        possible_steps = self.model.grid.get_neighborhood(
-            self.pos, moore=True, include_center=False
-        )
         x,y = self.pos
         self.model.grid.move_agent(self, (x+1,y))
 
@@ -48,28 +45,35 @@ class CarAgent2(mesa.Agent):
 
     def step(self):
         self.move()
+
 class SemaforoAgent(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
+        self.myTuple = []
     def move(self):
+        x,y = self.pos
+        new_position = x,y
+        self.model.grid.move_agent(self,new_position)
+
+    def compara(self):
         possible_steps = self.model.grid.get_neighborhood(
-            self.pos, moore=True, include_center=False
-        )
-        new_position = self.random.choice(possible_steps)
-        self.model.grid.move_agent(self, new_position)
+            self.pos,
+            moore=False,
+            include_center=False)
+        self.myTuple = possible_steps
     def step(self):
-        self.move()
+        self.compara()
+        self.move() 
+        print(self.myTuple)
 
 class entornoAgent(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
     def move(self):
-        possible_steps = self.model.grid.get_neighborhood(
-            self.pos, moore=True, include_center=False
-        )
-        new_position = self.random.choice(possible_steps)
+        x,y = self.pos
+        new_position = x,y
         self.model.grid.move_agent(self, new_position)
     def step(self):
         self.move()
