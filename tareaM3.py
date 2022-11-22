@@ -15,28 +15,38 @@ def agent_portrayal(agent):
         #Caso en el que sea semáforo
         if isinstance(agent,entornoAgent):
             portrayal["Color"] = "black"
-        if isinstance(agent,SemaforoAgent1):
-            portrayal["Color"] = "yellow"
-        if isinstance(agent,SemaforoAgent2):
-            portrayal["Color"] = "yellow"
+        if isinstance(agent,SemaforoAgent1) or isinstance(agent,SemaforoAgent2):
+            portrayal["Color"] = agent.status
         return portrayal
 
 
 def prueba(model):
     return 0
 
+#Conductor con comportamiento errático
 class CarAgent1(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
     def move(self):
+        list1 = [0,1,2]
         x,y = self.pos
-        self.model.grid.move_agent(self, (x+1,y))
+        self.model.grid.move_agent(self,(x + random.choice(list1), y))
+
+    def compara(self):
+        self.neighborhood = self.model.grid.get_neighborhood(
+            self.pos,
+            moore=True,
+            include_center=False,radius = 5)
+        self.neighbors =  self.model.grid.get_cell_list_contents(self.neighborhood)
+        for i in self.neighbors:
+            if self.pos == (9,5) and (isinstance(i,SemaforoAgent1)):
+                i.status = "yellow"
 
     def step(self):
-        #print("Creando agente " + self.nombre)
+        self.compara()
         self.move()
-
+#Conductor con comportamiento estable.
 class CarAgent2(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -44,71 +54,86 @@ class CarAgent2(mesa.Agent):
     def move(self):
         x,y = self.pos
         self.model.grid.move_agent(self, (x,y-1))
+        
+    def compara(self):
+        self.neighborhood = self.model.grid.get_neighborhood(
+            self.pos,
+            moore=True,
+            include_center=False,radius = 5)
+        self.neighbors =  self.model.grid.get_cell_list_contents(self.neighborhood)
+        for i in self.neighbors:
+            if self.pos == (5,1) and (isinstance(i,SemaforoAgent2)):
+                i.status = "yellow"
+                
+        #self.empty_neighbors = [c for c in self.neighborhood if self.model.grid.is_cell_empty(c)]
 
     def step(self):
+        self.compara()
         self.move()
+
 
 class SemaforoAgent1(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
-        self.izquierda = []
-        self.derecha = []
-        #self.value = self.model.grid.is_cell_empty([3,5])
+        self.status = "yellow"
+        self.conteo = 0
     def move(self):
         x,y = self.pos
         new_position = x,y
         self.model.grid.move_agent(self,new_position)
 
-    def verificaIzquierda(self):
-        if self.model.grid.is_cell_empty(self.izquierda):
-            print("Vacio")
-        else:
-            print("Contenido a la izquierda")
     def compara(self):
-        possible_steps = self.model.grid.get_neighborhood(
+        self.neighborhood = self.model.grid.get_neighborhood(
             self.pos,
             moore=False,
-            include_center=False)
-        self.izquierda = possible_steps[0]
-       # self.derecha = possible_steps[3]
+            include_center=False,radius = 2)
+        self.neighbors =  self.model.grid.get_cell_list_contents(self.neighborhood)
+        #self.empty_neighbors = [c for c in self.neighborhood if self.model.grid.is_cell_empty(c)]
     def step(self):
         self.compara()
         self.move() 
-        self.verificaIzquierda()
+        for i in self.neighbors:
+            if isinstance(i,CarAgent1):
+                self.status = "red"
+                for j in self.neighbors:
+                    if isinstance(j,SemaforoAgent2):
+                        j.status = "green"
 
+                print("Coche vecino tipo Agente 1" + " en " + str(i.pos) +"acercandose a "+" "+self.unique_id)
 class SemaforoAgent2(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
-        self.arriba = []
-        self.abajo = []
-        
-        #self.value = self.model.grid.is_cell_empty([3,5])
-    def verificaArriba(self):
-        if self.model.grid.is_cell_empty(self.arriba):
-            print("Vacio")
-        else:
-            print("Contenido arriba")
+        self.status = "yellow"
+        self.conteo = False
     def move(self):
         x,y = self.pos
         new_position = x,y
         self.model.grid.move_agent(self,new_position)
 
     def compara(self):
-        possible_steps = self.model.grid.get_neighborhood(
+        self.neighborhood = self.model.grid.get_neighborhood(
             self.pos,
             moore=False,
-            include_center=False)
-        #self.abajo = possible_steps[1]
-        self.arriba = possible_steps[2]
+            include_center=False,radius = 2)
+        self.neighbors =  self.model.grid.get_cell_list_contents(self.neighborhood)
+
     def step(self):
         self.compara()
-        self.move()
-       # self.verificaArriba()
-        
-    
+        self.move() 
+        for i in self.neighbors:
+            if isinstance(i,CarAgent2):
+                self.conteo = True
+                self.status = "red"
+                for j in self.neighbors:
+                    if isinstance(j,SemaforoAgent1):
+                        j.status = "green"
 
+                print("Coche vecino tipo Agente 2" + " en " + str(i.pos) +"acercandose a "+" "+self.unique_id)
+        
+
+#
 class entornoAgent(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -127,8 +152,6 @@ class CarModel(mesa.Model):
         self.schedule = mesa.time.RandomActivation(self)
         self.running = True
 
-       
-            
             #Creando agentes para carro
         conteo = 0
         
