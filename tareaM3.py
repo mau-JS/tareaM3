@@ -23,15 +23,15 @@ def agent_portrayal(agent):
 def prueba(model):
     return 0
 
-#Conductor con comportamiento errático
+#Conductor que se pasa el semáforo
 class CarAgent1(mesa.Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.nombre = unique_id
     def move(self):
-        list1 = [0,1,2]
+        #list1 = [0,1,2]
         x,y = self.pos
-        self.model.grid.move_agent(self,(x + random.choice(list1), y))
+        self.model.grid.move_agent(self,(x + 1, y))
 
     def compara(self):
         self.neighborhood = self.model.grid.get_neighborhood(
@@ -41,6 +41,8 @@ class CarAgent1(mesa.Agent):
         self.neighbors =  self.model.grid.get_cell_list_contents(self.neighborhood)
         for i in self.neighbors:
             if self.pos == (9,5) and (isinstance(i,SemaforoAgent1)):
+                i.status = "yellow"
+            if self.pos == (9,5) and (isinstance(i,SemaforoAgent2)):
                 i.status = "yellow"
 
     def step(self):
@@ -63,6 +65,8 @@ class CarAgent2(mesa.Agent):
         self.neighbors =  self.model.grid.get_cell_list_contents(self.neighborhood)
         for i in self.neighbors:
             if self.pos == (5,1) and (isinstance(i,SemaforoAgent2)):
+                i.status = "yellow"
+            if self.pos == (5,1) and (isinstance(i,SemaforoAgent1)):
                 i.status = "yellow"
                 
         #self.empty_neighbors = [c for c in self.neighborhood if self.model.grid.is_cell_empty(c)]
